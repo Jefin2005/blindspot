@@ -156,7 +156,7 @@
         apiIssues: "{% url 'api_issues' %}",
         apiIssuesNearby: "{% url 'api_issues_nearby' %}",
         apiStatistics: "{% url 'api_statistics' %}",
-        isAuthenticated: {{ user.is_authenticated| yesno: "true,false" }},
+        isAuthenticated: {% if user.is_authenticated %}true{% else %} false{% endif %},
     csrfToken: "{{ csrf_token }}"
     };
 </script>
