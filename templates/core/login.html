@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - The Blindspot Initiative{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to report and confirm issues</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="form-error"
+                style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-md); border: 1px solid rgba(239, 68, 68, 0.3);">
+                <i class="fa-solid fa-exclamation-circle"></i>
+                Invalid username or password. Please try again.
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label" for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-input" placeholder="Enter your username"
+                    required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password">Password</label>
+                <input type="password" name="password" id="id_password" class="form-input"
+                    placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit">
+                <i class="fa-solid fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="{% url 'register' %}">Join the Initiative</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

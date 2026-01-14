@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}The Blindspot Initiative - See What We've Been Ignoring{% endblock %}
+
+{% block content %}
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <!-- Statistics Panel -->
+        <div class="panel stats-panel">
+            <h3 class="panel-title">
+                <i class="fa-solid fa-chart-bar"></i> City Overview
+            </h3>
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-value" id="stat-total">{{ stats.total_issues }}</div>
+                    <div class="stat-label">Total Issues</div>
+                </div>
+                <div class="stat-card stat-ignored">
+                    <div class="stat-value" id="stat-ignored">{{ stats.ignored_issues }}</div>
+                    <div class="stat-label">Still Ignored</div>
+                </div>
+                <div class="stat-card stat-critical">
+                    <div class="stat-value" id="stat-critical">{{ stats.critical_issues }}</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+                <div class="stat-card stat-resolved">
+                    <div class="stat-value" id="stat-resolved">{{ stats.resolved_issues }}</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="panel filter-panel">
+            <h3 class="panel-title">
+                <i class="fa-solid fa-filter"></i> Filter by Authority
+            </h3>
+            <div class="filter-list">
+                <button class="filter-btn active" data-authority="all">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>All Authorities</span>
+                </button>
+                {% for authority in authorities %}
+                <button class="filter-btn" data-authority="{{ authority.id }}"
+                    style="--authority-color: {{ authority.color }}">
+                    <i class="fa-solid {{ authority.icon }}"></i>
+                    <span>{{ authority.name }}</span>
+                    <span class="filter-count">{{ authority.categories.count }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="panel filter-panel">
+            <h3 class="panel-title">
+                <i class="fa-solid fa-flag"></i> Filter by Status
+            </h3>
+            <div class="filter-list">
+                <button class="filter-btn status-btn active" data-status="all">
+                    <span class="status-dot status-all"></span>
+                    <span>All Status</span>
+                </button>
+                <button class="filter-btn status-btn" data-status="ignored">
+                    <span class="status-dot status-ignored"></span>
+                    <span>Ignored</span>
+                </button>
+                <button class="filter-btn status-btn" data-status="acknowledged">
+                    <span class="status-dot status-acknowledged"></span>
+                    <span>Acknowledged</span>
+                </button>
+                <button class="filter-btn status-btn" data-status="resolved">
+                    <span class="status-dot status-resolved"></span>
+                    <span>Resolved</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="panel legend-panel">
+            <h3 class="panel-title">
+                <i class="fa-solid fa-circle-info"></i> Urgency Legend
+            </h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-marker legend-critical"></span>
+                    <span>Critical (40+ days ignored)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker legend-serious"></span>
+                    <span>Serious (20-40 days)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker legend-moderate"></span>
+                    <span>Moderate (7-20 days)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker legend-recent"></span>
+                    <span>Recent (< 7 days)</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Map Container -->
+    <div class="map-wrapper">
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="map-control-btn" id="btn-my-location" title="Find issues near me">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>My Location</span>
+            </button>
+            <button class="map-control-btn" id="btn-toggle-heatmap" title="Toggle heat map">
+                <i class="fa-solid fa-fire"></i>
+                <span>Heat Map</span>
+            </button>
+            <button class="map-control-btn" id="btn-refresh" title="Refresh data">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+
+        <!-- The Map -->
+        <div id="map"></div>
+
+        <!-- Nearby Issues Panel (hidden by default) -->
+        <div class="nearby-panel" id="nearby-panel" style="display: none;">
+            <div class="nearby-header">
+                <h3><i class="fa-solid fa-location-dot"></i> Issues Near You</h3>
+                <button class="nearby-close" id="nearby-close">×</button>
+            </div>
+            <div class="nearby-content" id="nearby-content">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Detail Modal -->
+<div class="modal" id="issue-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <button class="modal-close" id="modal-close">×</button>
+        <div class="modal-body" id="modal-body">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Pass Django settings to JavaScript
+    const MAP_CONFIG = {
+        center: [9.9312, 76.2673],  // Cochin coordinates
+        zoom: 13,
+        apiIssues: "{% url 'api_issues' %}",
+        apiIssuesNearby: "{% url 'api_issues_nearby' %}",
+        apiStatistics: "{% url 'api_statistics' %}",
+        isAuthenticated: {{ user.is_authenticated| yesno: "true,false" }},
+    csrfToken: "{{ csrf_token }}"
+    };
+</script>
+{% endblock %}

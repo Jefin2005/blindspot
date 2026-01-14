@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Us - The Blindspot Initiative{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Join The Initiative</h1>
+            <p class="auth-subtitle">Become a civic watchdog. Help expose neglect.</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="form-error"
+                style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-md); border: 1px solid rgba(239, 68, 68, 0.3);">
+                {% for field in form %}
+                {% for error in field.errors %}
+                <div><i class="fa-solid fa-exclamation-circle"></i> {{ error }}</div>
+                {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <div><i class="fa-solid fa-exclamation-circle"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label" for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-input" placeholder="Choose a username"
+                    required autofocus value="{{ form.username.value|default:'' }}">
+                <p class="form-help">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password1">Password</label>
+                <input type="password" name="password1" id="id_password1" class="form-input"
+                    placeholder="Create a strong password" required>
+                <p class="form-help">Must be at least 8 characters and not too common.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password2">Confirm Password</label>
+                <input type="password" name="password2" id="id_password2" class="form-input"
+                    placeholder="Confirm your password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit">
+                <i class="fa-solid fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account? <a href="{% url 'login' %}">Sign in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
