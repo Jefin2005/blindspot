@@ -93,8 +93,49 @@ async function loadIssues() {
             renderHeatmap(issuesData);
         }
 
+        // Update statistics and filter counts
+        await loadStatistics();
+
     } catch (error) {
         console.error('Error loading issues:', error);
+    }
+}
+
+/**
+ * Load and update statistics including authority counts
+ */
+async function loadStatistics() {
+    try {
+        const response = await fetch(MAP_CONFIG.apiStatistics);
+        const stats = await response.json();
+
+        // Update dashboard stats
+        const statTotal = document.getElementById('stat-total');
+        const statIgnored = document.getElementById('stat-ignored');
+        const statCritical = document.getElementById('stat-critical');
+        const statResolved = document.getElementById('stat-resolved');
+
+        if (statTotal) statTotal.textContent = stats.total;
+        if (statIgnored) statIgnored.textContent = stats.by_status.ignored;
+        if (statCritical) statCritical.textContent = stats.critical_count;
+        if (statResolved) statResolved.textContent = stats.by_status.resolved;
+
+        // Update authority filter counts
+        // First reset all to 0
+        document.querySelectorAll('[id^="authority-count-"]').forEach(el => {
+            el.textContent = '0';
+        });
+
+        // Then update with actual counts
+        stats.by_authority.forEach(auth => {
+            const countEl = document.getElementById(`authority-count-${auth.category__authority__id}`);
+            if (countEl) {
+                countEl.textContent = auth.count;
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading statistics:', error);
     }
 }
 

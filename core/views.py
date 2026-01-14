@@ -196,7 +196,7 @@ def api_statistics(request):
     }
     
     by_authority = list(
-        Issue.objects.values('category__authority__name', 'category__authority__color')
+        Issue.objects.values('category__authority__id', 'category__authority__name', 'category__authority__color')
         .annotate(count=Count('id'))
         .order_by('-count')
     )

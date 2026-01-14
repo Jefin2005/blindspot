@@ -47,7 +47,7 @@
                     style="--authority-color: {{ authority.color }}">
                     <i class="fa-solid {{ authority.icon }}"></i>
                     <span>{{ authority.name }}</span>
-                    <span class="filter-count">{{ authority.categories.count }}</span>
+                    <span class="filter-count" id="authority-count-{{ authority.id }}">0</span>
                 </button>
                 {% endfor %}
             </div>
