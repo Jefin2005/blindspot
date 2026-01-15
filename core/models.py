@@ -266,5 +266,3 @@ class IssueComment(models.Model):
     
     def __str__(self):
         return f"Comment by {self.user.username} on {self.issue.title}"
->>>>>>> 2df7404 (11th commit)
-
