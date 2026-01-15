@@ -7,11 +7,13 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Avg
 from django.utils import timezone
+from django.core.paginator import Paginator
 from datetime import timedelta
+from functools import wraps
 import json
 import math
 
-from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog
+from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog, AuthorityUser, IssueStatusLog
 from .notifications import send_authority_notification
 
 
@@ -456,3 +458,207 @@ def api_authority_silence_scores(request):
         'authorities': scores
     })
 
+
+# ========================================
+# AUTHORITY AUTHENTICATION & DASHBOARD
+# ========================================
+
+def authority_required(view_func):
+    """
+    Decorator that checks if the user is an authenticated authority user.
+    Redirects to authority login if not authenticated or not an authority.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please login to access the authority dashboard.')
+            return redirect('authority_login')
+        
+        try:
+            authority_user = request.user.authority_profile
+            if not authority_user.is_active:
+                messages.error(request, 'Your authority account has been deactivated.')
+                return redirect('authority_login')
+        except AuthorityUser.DoesNotExist:
+            messages.error(request, 'You do not have authority access.')
+            return redirect('index')
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def authority_login(request):
+    """Separate login page for authority users"""
+    if request.user.is_authenticated:
+        # Check if user is an authority
+        if hasattr(request.user, 'authority_profile'):
+            return redirect('authority_dashboard')
+        else:
+            messages.info(request, 'You are logged in as a citizen, not an authority.')
+            return redirect('index')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            # Check if this user is linked to an authority
+            try:
+                authority_user = user.authority_profile
+                if not authority_user.is_active:
+                    messages.error(request, 'Your authority account has been deactivated.')
+                    return redirect('authority_login')
+                
+                login(request, user)
+                messages.success(request, f'Welcome, {authority_user.authority.name}!')
+                return redirect('authority_dashboard')
+            except AuthorityUser.DoesNotExist:
+                messages.error(request, 'This account is not registered as an authority user.')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'core/authority_login.html', {'form': form})
+
+
+def authority_logout(request):
+    """Logout authority user"""
+    logout(request)
+    messages.info(request, 'You have been logged out.')
+    return redirect('authority_login')
+
+
+@authority_required
+def authority_dashboard(request):
+    """Dashboard showing issues assigned to the logged-in authority"""
+    authority_user = request.user.authority_profile
+    authority = authority_user.authority
+    
+    # Get issues for this authority only
+    issues = Issue.objects.filter(
+        category__authority=authority
+    ).select_related('category').order_by('-reported_at')
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        issues = issues.filter(status=status_filter)
+    
+    # Pagination
+    paginator = Paginator(issues, 20)  # 20 issues per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics for this authority
+    stats = {
+        'total': Issue.objects.filter(category__authority=authority).count(),
+        'ignored': Issue.objects.filter(category__authority=authority, status='ignored').count(),
+        'acknowledged': Issue.objects.filter(category__authority=authority, status='acknowledged').count(),
+        'in_progress': Issue.objects.filter(category__authority=authority, status='in_progress').count(),
+        'resolved': Issue.objects.filter(category__authority=authority, status='resolved').count(),
+    }
+    
+    context = {
+        'authority': authority,
+        'authority_user': authority_user,
+        'page_obj': page_obj,
+        'stats': stats,
+        'status_filter': status_filter,
+    }
+    return render(request, 'core/authority_dashboard.html', context)
+
+
+@authority_required
+@require_POST
+def authority_accept_issue(request, issue_id):
+    """Accept an issue: Ignored → Acknowledged"""
+    authority_user = request.user.authority_profile
+    issue = get_object_or_404(Issue, id=issue_id, category__authority=authority_user.authority)
+    
+    # Validate status transition
+    if issue.status != 'ignored':
+        messages.error(request, f'Cannot accept issue. Current status is "{issue.get_status_display()}".')
+        return redirect('authority_dashboard')
+    
+    # Update status
+    previous_status = issue.status
+    issue.status = 'acknowledged'
+    issue.acknowledged_at = timezone.now()
+    issue.status_updated_at = timezone.now()
+    issue.save()
+    
+    # Log the change
+    IssueStatusLog.objects.create(
+        issue=issue,
+        authority_user=authority_user,
+        previous_status=previous_status,
+        new_status='acknowledged',
+        notes=request.POST.get('notes', '')
+    )
+    
+    messages.success(request, f'Issue #{issue.id} has been accepted.')
+    return redirect('authority_dashboard')
+
+
+@authority_required
+@require_POST
+def authority_start_progress(request, issue_id):
+    """Start progress on an issue: Acknowledged → In Progress"""
+    authority_user = request.user.authority_profile
+    issue = get_object_or_404(Issue, id=issue_id, category__authority=authority_user.authority)
+    
+    # Validate status transition
+    if issue.status != 'acknowledged':
+        messages.error(request, f'Cannot start progress. Issue must be "Acknowledged" first.')
+        return redirect('authority_dashboard')
+    
+    # Update status
+    previous_status = issue.status
+    issue.status = 'in_progress'
+    issue.in_progress_at = timezone.now()
+    issue.status_updated_at = timezone.now()
+    issue.save()
+    
+    # Log the change
+    IssueStatusLog.objects.create(
+        issue=issue,
+        authority_user=authority_user,
+        previous_status=previous_status,
+        new_status='in_progress',
+        notes=request.POST.get('notes', '')
+    )
+    
+    messages.success(request, f'Issue #{issue.id} is now in progress.')
+    return redirect('authority_dashboard')
+
+
+@authority_required
+@require_POST
+def authority_complete_issue(request, issue_id):
+    """Complete an issue: In Progress → Resolved"""
+    authority_user = request.user.authority_profile
+    issue = get_object_or_404(Issue, id=issue_id, category__authority=authority_user.authority)
+    
+    # Validate status transition
+    if issue.status != 'in_progress':
+        messages.error(request, f'Cannot complete. Issue must be "In Progress" first.')
+        return redirect('authority_dashboard')
+    
+    # Update status
+    previous_status = issue.status
+    issue.status = 'resolved'
+    issue.resolved_at = timezone.now()
+    issue.status_updated_at = timezone.now()
+    issue.save()
+    
+    # Log the change
+    IssueStatusLog.objects.create(
+        issue=issue,
+        authority_user=authority_user,
+        previous_status=previous_status,
+        new_status='resolved',
+        notes=request.POST.get('notes', '')
+    )
+    
+    messages.success(request, f'Issue #{issue.id} has been marked as resolved.')
+    return redirect('authority_dashboard')

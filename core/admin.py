@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog
+from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog, AuthorityUser, IssueStatusLog
 
 
 @admin.register(Authority)
@@ -24,11 +24,11 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'status', 'severity', 'days_since_report', 'reported_at']
+    list_display = ['title', 'category', 'status', 'severity', 'days_since_report', 'reported_at', 'status_updated_at']
     list_filter = ['status', 'severity', 'category__authority']
     search_fields = ['title', 'address', 'description']
     date_hierarchy = 'reported_at'
-    readonly_fields = ['days_since_report', 'urgency_level', 'escalation_label']
+    readonly_fields = ['days_since_report', 'urgency_level', 'escalation_label', 'status_updated_at']
 
 
 @admin.register(IssueConfirmation)
@@ -53,3 +53,30 @@ class NotificationLogAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False  # Logs are created automatically, not manually
+
+
+@admin.register(AuthorityUser)
+class AuthorityUserAdmin(admin.ModelAdmin):
+    list_display = ['user', 'authority', 'is_active', 'created_at']
+    list_filter = ['is_active', 'authority']
+    search_fields = ['user__username', 'authority__name']
+    raw_id_fields = ['user']
+
+
+@admin.register(IssueStatusLog)
+class IssueStatusLogAdmin(admin.ModelAdmin):
+    list_display = ['issue', 'authority_user', 'previous_status', 'new_status', 'changed_at']
+    list_filter = ['new_status', 'changed_at']
+    search_fields = ['issue__title', 'authority_user__authority__name']
+    date_hierarchy = 'changed_at'
+    readonly_fields = ['issue', 'authority_user', 'previous_status', 'new_status', 'changed_at', 'notes']
+    
+    def has_add_permission(self, request):
+        return False  # Logs are created automatically
+    
+    def has_change_permission(self, request, obj=None):
+        return False  # Logs are read-only
+    
+    def has_delete_permission(self, request, obj=None):
+        return False  # Logs cannot be deleted
+

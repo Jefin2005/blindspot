@@ -41,6 +41,82 @@
         <div class="auth-footer">
             Don't have an account? <a href="{% url 'register' %}">Join the Initiative</a>
         </div>
+
+        <!-- Authority Access Section -->
+        <div class="authority-access-section">
+            <div class="authority-divider">
+                <span>Official / Authority Access</span>
+            </div>
+            <p class="authority-description">For municipal and departmental officials</p>
+            <a href="{% url 'authority_login' %}" class="btn btn-authority">
+                <i class="fa-solid fa-building-columns"></i> Login as Authority
+            </a>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Authority Access Section */
+    .authority-access-section {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        text-align: center;
+    }
+
+    .authority-divider {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .authority-divider::before,
+    .authority-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-subtle);
+    }
+
+    .authority-divider span {
+        padding: 0 0.75rem;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .authority-description {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.875rem;
+    }
+
+    .btn-authority {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.625rem 1rem;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-authority:hover {
+        background: var(--bg-elevated);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    .btn-authority i {
+        font-size: 0.9rem;
+    }
+</style>
 {% endblock %}

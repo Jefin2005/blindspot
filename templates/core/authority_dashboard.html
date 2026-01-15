@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Dashboard - {{ authority.name }}{% endblock %}
+
+{% block content %}
+<div class="authority-dashboard">
+    <!-- Header -->
+    <div class="authority-header">
+        <div class="authority-info">
+            <h1 class="authority-name">
+                <i class="fa-solid {{ authority.icon }}" style="color: {{ authority.color }}"></i>
+                {{ authority.name }}
+            </h1>
+            <p class="authority-subtitle">Issue Management Dashboard</p>
+        </div>
+        <a href="{% url 'authority_logout' %}" class="btn btn-ghost">
+            <i class="fa-solid fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+
+    <!-- Statistics -->
+    <div class="authority-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Issues</div>
+        </div>
+        <div class="stat-card stat-ignored">
+            <div class="stat-value">{{ stats.ignored }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card stat-acknowledged">
+            <div class="stat-value">{{ stats.acknowledged }}</div>
+            <div class="stat-label">Accepted</div>
+        </div>
+        <div class="stat-card stat-in-progress">
+            <div class="stat-value">{{ stats.in_progress }}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card stat-resolved">
+            <div class="stat-value">{{ stats.resolved }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <a href="{% url 'authority_dashboard' %}" class="filter-tab {% if not status_filter %}active{% endif %}">All</a>
+        <a href="?status=ignored" class="filter-tab {% if status_filter == 'ignored' %}active{% endif %}">Pending</a>
+        <a href="?status=acknowledged"
+            class="filter-tab {% if status_filter == 'acknowledged' %}active{% endif %}">Accepted</a>
+        <a href="?status=in_progress" class="filter-tab {% if status_filter == 'in_progress' %}active{% endif %}">In
+            Progress</a>
+        <a href="?status=resolved" class="filter-tab {% if status_filter == 'resolved' %}active{% endif %}">Resolved</a>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="issues-table-wrapper">
+        <table class="issues-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title / Category</th>
+                    <th>Location</th>
+                    <th>Days</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in page_obj %}
+                <tr>
+                    <td class="issue-id">#{{ issue.id }}</td>
+                    <td class="issue-title">
+                        <strong>{{ issue.title }}</strong>
+                        <span class="issue-category">{{ issue.category.name }}</span>
+                    </td>
+                    <td class="issue-location">{{ issue.address|truncatechars:40 }}</td>
+                    <td class="issue-days">
+                        <span
+                            class="days-badge {% if issue.days_since_report >= 30 %}critical{% elif issue.days_since_report >= 14 %}warning{% endif %}">
+                            {{ issue.days_since_report }}
+                        </span>
+                    </td>
+                    <td class="issue-status">
+                        <span class="status-badge status-{{ issue.status }}">
+                            {{ issue.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="issue-actions">
+                        {% if issue.status == 'ignored' %}
+                        <form method="post" action="{% url 'authority_accept_issue' issue.id %}"
+                            style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn accept" title="Accept Issue">
+                                <i class="fa-solid fa-check"></i> Accept
+                            </button>
+                        </form>
+                        {% elif issue.status == 'acknowledged' %}
+                        <form method="post" action="{% url 'authority_start_progress' issue.id %}"
+                            style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn progress" title="Start Work">
+                                <i class="fa-solid fa-play"></i> Start
+                            </button>
+                        </form>
+                        {% elif issue.status == 'in_progress' %}
+                        <form method="post" action="{% url 'authority_complete_issue' issue.id %}"
+                            style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn complete" title="Mark Complete">
+                                <i class="fa-solid fa-check-double"></i> Complete
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="action-done">
+                            <i class="fa-solid fa-check-circle"></i> Done
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>No issues found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+            class="page-link">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+        </a>
+        {% endif %}
+
+        <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+            class="page-link">
+            Next <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Authority Dashboard Styles */
+    .authority-dashboard {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .authority-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .authority-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .authority-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Stats */
+    .authority-stats {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .authority-stats .stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .authority-stats .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+    }
+
+    .authority-stats .stat-ignored .stat-value {
+        color: var(--color-critical);
+    }
+
+    .authority-stats .stat-acknowledged .stat-value {
+        color: var(--status-acknowledged);
+    }
+
+    .authority-stats .stat-in-progress .stat-value {
+        color: var(--status-in-progress);
+    }
+
+    .authority-stats .stat-resolved .stat-value {
+        color: var(--status-resolved);
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 0.5rem;
+    }
+
+    .filter-tab {
+        padding: 0.5rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .filter-tab:hover {
+        color: var(--text-primary);
+        background: var(--bg-hover);
+    }
+
+    .filter-tab.active {
+        color: var(--text-primary);
+        background: var(--bg-elevated);
+    }
+
+    /* Issues Table */
+    .issues-table-wrapper {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    /* Custom Scrollbar */
+    .issues-table-wrapper::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .issues-table-wrapper::-webkit-scrollbar-track {
+        background: var(--bg-elevated);
+    }
+
+    .issues-table-wrapper::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .issues-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    .issues-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .issues-table th,
+    .issues-table td {
+        padding: 0.875rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .issues-table th {
+        background: var(--bg-elevated);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .issues-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .issue-id {
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+    }
+
+    .issue-title strong {
+        display: block;
+        color: var(--text-primary);
+    }
+
+    .issue-category {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .issue-location {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .days-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--bg-elevated);
+    }
+
+    .days-badge.warning {
+        color: var(--color-moderate);
+    }
+
+    .days-badge.critical {
+        color: var(--color-critical);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.625rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-badge.status-ignored {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--color-critical);
+    }
+
+    .status-badge.status-acknowledged {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--status-acknowledged);
+    }
+
+    .status-badge.status-in_progress {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--status-in-progress);
+    }
+
+    .status-badge.status-resolved {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--status-resolved);
+    }
+
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .action-btn.accept {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--status-acknowledged);
+    }
+
+    .action-btn.accept:hover {
+        background: var(--status-acknowledged);
+        color: white;
+    }
+
+    .action-btn.progress {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--status-in-progress);
+    }
+
+    .action-btn.progress:hover {
+        background: var(--status-in-progress);
+        color: white;
+    }
+
+    .action-btn.complete {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--status-resolved);
+    }
+
+    .action-btn.complete:hover {
+        background: var(--status-resolved);
+        color: white;
+    }
+
+    .action-done {
+        color: var(--status-resolved);
+        font-size: 0.8rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem !important;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+    }
+
+    .page-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all var(--transition-fast);
+    }
+
+    .page-link:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .page-info {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .authority-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .issues-table-wrapper {
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}

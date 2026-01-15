@@ -15,8 +15,17 @@ urlpatterns = [
     path('api/statistics/', views.api_statistics, name='api_statistics'),
     path('api/authorities/silence-scores/', views.api_authority_silence_scores, name='api_authority_silence_scores'),
     
-    # Authentication
+    # Citizen Authentication
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    
+    # Authority Authentication & Dashboard
+    path('authority/login/', views.authority_login, name='authority_login'),
+    path('authority/logout/', views.authority_logout, name='authority_logout'),
+    path('authority/dashboard/', views.authority_dashboard, name='authority_dashboard'),
+    path('authority/issues/<int:issue_id>/accept/', views.authority_accept_issue, name='authority_accept_issue'),
+    path('authority/issues/<int:issue_id>/progress/', views.authority_start_progress, name='authority_start_progress'),
+    path('authority/issues/<int:issue_id>/complete/', views.authority_complete_issue, name='authority_complete_issue'),
 ]
+

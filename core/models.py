@@ -88,7 +88,9 @@ class Issue(models.Model):
     # Timestamps
     reported_at = models.DateTimeField(default=timezone.now)
     acknowledged_at = models.DateTimeField(null=True, blank=True)
+    in_progress_at = models.DateTimeField(null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+    status_updated_at = models.DateTimeField(null=True, blank=True, help_text="Last status change timestamp")
     
     # User tracking
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='reported_issues')
@@ -211,3 +213,43 @@ class NotificationLog(models.Model):
     
     def __str__(self):
         return f"Notification to {self.authority.name} for Issue #{self.issue.id} - {self.status}"
+
+
+class AuthorityUser(models.Model):
+    """
+    Links a Django User account to an Authority for login access.
+    Allows authority representatives to manage issues assigned to them.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='authority_profile')
+    authority = models.OneToOneField(Authority, on_delete=models.CASCADE, related_name='user_account')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = "Authority User"
+        verbose_name_plural = "Authority Users"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.authority.name}"
+
+
+class IssueStatusLog(models.Model):
+    """
+    Audit log for tracking all status changes made by authorities.
+    Read-only record for accountability and transparency.
+    """
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='status_logs')
+    authority_user = models.ForeignKey(AuthorityUser, on_delete=models.SET_NULL, null=True, related_name='status_changes')
+    previous_status = models.CharField(max_length=20)
+    new_status = models.CharField(max_length=20)
+    changed_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, help_text="Optional notes about the status change")
+    
+    class Meta:
+        ordering = ['-changed_at']
+        verbose_name = "Issue Status Log"
+        verbose_name_plural = "Issue Status Logs"
+    
+    def __str__(self):
+        return f"Issue #{self.issue.id}: {self.previous_status} → {self.new_status}"
+
