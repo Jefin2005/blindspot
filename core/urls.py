@@ -3,7 +3,8 @@ from . import views
 
 urlpatterns = [
     # Main views
-    path('', views.index, name='index'),
+    path('', views.landing_page, name='landing'),
+    path('dashboard/', views.index, name='index'),
     path('report/', views.report_issue, name='report_issue'),
     
     # API endpoints

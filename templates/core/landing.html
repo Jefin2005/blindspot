@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+
+{% block title %}The Blindspot Initiative - Exposing Civic Neglect{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="landing-hero">
+    <div class="hero-backdrop"></div>
+    <div class="hero-spotlight"></div>
+    <div class="hero-content">
+        <!-- Logo -->
+        <div class="hero-logo">
+            <i class="fa-solid fa-eye"></i>
+        </div>
+
+        <!-- Project Name - Primary Focus -->
+        <h1 class="hero-title">
+            <span class="title-the">The</span>
+            <span class="title-main">Blindspot</span>
+            <span class="title-initiative">Initiative</span>
+        </h1>
+
+        <!-- Quote - Subtle Supporting Element -->
+        <blockquote class="hero-quote">
+            "These problems were never invisible — we just stopped seeing them."
+        </blockquote>
+
+        <!-- Call to Action -->
+        <div class="hero-actions">
+            <a href="{% url 'index' %}" class="btn btn-hero-primary">
+                <i class="fa-solid fa-map-location-dot"></i>
+                Explore the City
+            </a>
+            <a href="{% url 'report_issue' %}" class="btn btn-hero-secondary">
+                <i class="fa-solid fa-flag"></i>
+                Report an Issue
+            </a>
+        </div>
+
+        <div class="scroll-cue">
+            <span>Scroll to see what's ignored</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </div>
+</section>
+
+<!-- Supporting Section -->
+<section class="landing-about">
+    <div class="about-container">
+        <div class="about-block">
+            <div class="about-icon">
+                <i class="fa-solid fa-eye-slash"></i>
+            </div>
+            <h3>Neglect isn't accidental.</h3>
+            <p>Broken streetlights, overflowing drains, crumbling roads — these aren't failures of visibility. They're
+                failures of attention. We've normalized what should outrage us.</p>
+        </div>
+
+        <div class="about-block">
+            <div class="about-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <h3>Silence is measurable.</h3>
+            <p>Every day without action is recorded. Every ignored report becomes evidence. Time itself becomes the
+                metric of institutional neglect.</p>
+        </div>
+
+        <div class="about-block">
+            <div class="about-icon">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <h3>Accountability begins with visibility.</h3>
+            <p>When problems are documented, geolocated, and timestamped — invisibility ends. This platform turns civic
+                blindspots into public record.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Banner -->
+<section class="landing-stats">
+    <div class="stats-container">
+        <div class="stat-item">
+            <span class="stat-number">{{ stats.total_issues }}</span>
+            <span class="stat-label">Issues Documented</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-number stat-warning">{{ stats.unresolved }}</span>
+            <span class="stat-label">Still Unresolved</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-number stat-critical">{{ stats.days_ignored }}</span>
+            <span class="stat-label">Ignored by Authorities</span>
+        </div>
+    </div>
+</section>
+
+<!-- Final Call to Action -->
+<section class="landing-cta">
+    <h2>The city is watching. Are you?</h2>
+    <p>Join the initiative. Document what others overlook. Demand accountability.</p>
+    <div class="cta-actions">
+        <a href="{% url 'index' %}" class="btn btn-hero-primary">
+            <i class="fa-solid fa-binoculars"></i>
+            View the Map
+        </a>
+        <a href="{% url 'register' %}" class="btn btn-hero-secondary">
+            <i class="fa-solid fa-user-plus"></i>
+            Join the Initiative
+        </a>
+    </div>
+</section>
+
+<style>
+    /* ===== LANDING PAGE STYLES ===== */
+
+    /* Hero Section */
+    .landing-hero {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .hero-backdrop {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(10, 12, 16, 0.95) 0%, rgba(10, 12, 16, 0.8) 50%, rgba(10, 12, 16, 0.98) 100%),
+            url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50h100M50 0v100' stroke='%23ffffff' stroke-opacity='0.02' fill='none'/%3E%3C/svg%3E");
+        background-color: var(--bg-base);
+    }
+
+    /* Soft spotlight behind logo and title */
+    .hero-spotlight {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        max-width: 900px;
+        padding: 2rem;
+        animation: fadeIn 1.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Logo */
+    .hero-logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.1) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 50%;
+        animation: fadeIn 1.5s ease-out 0.3s both;
+    }
+
+    .hero-logo i {
+        font-size: 2rem;
+        color: rgba(239, 68, 68, 0.9);
+    }
+
+    /* Project Title - The Dominant Element */
+    .hero-title {
+        margin: 0 0 2.5rem;
+        line-height: 1.1;
+        animation: fadeIn 1.5s ease-out 0.5s both;
+    }
+
+    .title-the {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 300;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .title-main {
+        display: block;
+        font-size: clamp(3rem, 10vw, 5.5rem);
+        font-weight: 200;
+        letter-spacing: 0.02em;
+        color: var(--text-primary);
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+    }
+
+    .title-initiative {
+        display: block;
+        font-size: clamp(1.25rem, 3vw, 1.75rem);
+        font-weight: 400;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+    }
+
+    /* Quote - Subtle Supporting Element */
+    .hero-quote {
+        font-size: clamp(0.95rem, 2vw, 1.15rem);
+        font-weight: 300;
+        line-height: 1.6;
+        color: var(--text-muted);
+        margin: 0 auto 3rem;
+        max-width: 600px;
+        font-style: italic;
+        font-family: Georgia, 'Times New Roman', serif;
+        letter-spacing: 0.01em;
+        opacity: 0.8;
+        animation: fadeIn 1.5s ease-out 0.8s both;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+    }
+
+    .btn-hero-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.875rem 1.75rem;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: var(--radius-md);
+        color: white;
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all var(--transition-base);
+    }
+
+    .btn-hero-primary:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 1) 0%, rgba(185, 28, 28, 1) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-hero-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.875rem 1.75rem;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all var(--transition-base);
+    }
+
+    .btn-hero-secondary:hover {
+        background: var(--bg-elevated);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    .scroll-cue {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(8px);
+        }
+    }
+
+    .scroll-cue i {
+        font-size: 1rem;
+    }
+
+    /* About Section */
+    .landing-about {
+        background: var(--bg-base);
+        padding: 6rem 2rem;
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .about-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 3rem;
+    }
+
+    .about-block {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .about-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 50%;
+        color: var(--text-muted);
+        font-size: 1.25rem;
+    }
+
+    .about-block h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .about-block p {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+
+    /* Statistics Banner */
+    .landing-stats {
+        background: var(--bg-surface);
+        border-top: 1px solid var(--border-subtle);
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 3rem 2rem;
+    }
+
+    .stats-container {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-number.stat-warning {
+        color: var(--status-in-progress);
+    }
+
+    .stat-number.stat-critical {
+        color: var(--color-critical);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 50px;
+        background: var(--border-subtle);
+    }
+
+    /* Final CTA */
+    .landing-cta {
+        background: var(--bg-base);
+        padding: 5rem 2rem;
+        text-align: center;
+    }
+
+    .landing-cta h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .landing-cta p {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    .cta-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .hero-quote {
+            font-size: 1.5rem;
+        }
+
+        .stats-container {
+            gap: 2rem;
+        }
+
+        .stat-divider {
+            display: none;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}

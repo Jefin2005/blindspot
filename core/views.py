@@ -17,6 +17,17 @@ from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, 
 from .notifications import send_authority_notification
 
 
+def landing_page(request):
+    """Landing page - The opening experience"""
+    # Get some stats for impact
+    stats = {
+        'total_issues': Issue.objects.count(),
+        'unresolved': Issue.objects.exclude(status='resolved').count(),
+        'days_ignored': Issue.objects.filter(status='ignored').count(),
+    }
+    return render(request, 'core/landing.html', {'stats': stats})
+
+
 def index(request):
     """Main map view"""
     authorities = Authority.objects.prefetch_related('categories').all()
