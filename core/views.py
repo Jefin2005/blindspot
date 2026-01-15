@@ -13,6 +13,7 @@ from functools import wraps
 import json
 import math
 
+<<<<<<< HEAD
 from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog, AuthorityUser, IssueStatusLog
 from .notifications import send_authority_notification
 
@@ -26,6 +27,9 @@ def landing_page(request):
         'days_ignored': Issue.objects.filter(status='ignored').count(),
     }
     return render(request, 'core/landing.html', {'stats': stats})
+=======
+from .models import Authority, Category, Issue, IssueConfirmation, IssueComment, UserProfile
+>>>>>>> 2df7404 (11th commit)
 
 
 def index(request):
@@ -365,6 +369,7 @@ def report_issue(request):
     return render(request, 'core/report.html', {'categories': categories})
 
 
+<<<<<<< HEAD
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance between two points on Earth
@@ -673,3 +678,99 @@ def authority_complete_issue(request, issue_id):
     
     messages.success(request, f'Issue #{issue.id} has been marked as resolved.')
     return redirect('authority_dashboard')
+=======
+def api_unaddressed_issues(request):
+    """Return unaddressed (ignored) issues sorted by days ignored (descending)"""
+    issues = Issue.objects.filter(status='ignored').select_related(
+        'category', 'category__authority'
+    ).annotate(
+        confirmation_count=Count('confirmations'),
+        comment_count=Count('comments')
+    )
+    
+    # Sort by days ignored (calculated in Python since it's a property)
+    issues_list = list(issues)
+    issues_list.sort(key=lambda x: x.days_ignored, reverse=True)
+    
+    # Limit to top 20 for sidebar display
+    issues_list = issues_list[:20]
+    
+    result = []
+    for rank, issue in enumerate(issues_list, 1):
+        result.append({
+            'id': issue.id,
+            'rank': rank,
+            'title': issue.title,
+            'category': issue.category.name,
+            'authority': issue.category.authority.name,
+            'days_ignored': issue.days_ignored,
+            'urgency_level': issue.urgency_level,
+            'urgency_color': issue.urgency_color,
+            'confirmation_count': issue.confirmation_count,
+            'comment_count': issue.comment_count,
+            'address': issue.address,
+        })
+    
+    return JsonResponse({'issues': result})
+
+
+def api_issue_comments(request, issue_id):
+    """Get comments for an issue"""
+    issue = get_object_or_404(Issue, id=issue_id)
+    comments = issue.comments.select_related('user').all()[:10]
+    
+    result = [{
+        'id': c.id,
+        'user': c.user.username,
+        'content': c.content,
+        'created_at': c.created_at.isoformat(),
+    } for c in comments]
+    
+    return JsonResponse({'comments': result})
+
+
+@login_required
+@require_POST
+def api_add_comment(request, issue_id):
+    """Add a comment to an unaddressed issue"""
+    issue = get_object_or_404(Issue, id=issue_id)
+    
+    try:
+        data = json.loads(request.body)
+        content = data.get('content', '').strip()
+        
+        if not content:
+            return JsonResponse({
+                'success': False,
+                'message': 'Comment content is required'
+            }, status=400)
+        
+        if len(content) > 500:
+            return JsonResponse({
+                'success': False,
+                'message': 'Comment must be 500 characters or less'
+            }, status=400)
+        
+        comment = IssueComment.objects.create(
+            issue=issue,
+            user=request.user,
+            content=content
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Comment added successfully',
+            'comment': {
+                'id': comment.id,
+                'user': comment.user.username,
+                'content': comment.content,
+                'created_at': comment.created_at.isoformat(),
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=400)
+
+>>>>>>> 2df7404 (11th commit)

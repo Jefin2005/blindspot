@@ -5,6 +5,7 @@
 
 // Global state
 let map;
+let tileLayer;
 let markersLayer;
 let heatmapLayer;
 let userLocationMarker;
@@ -23,7 +24,11 @@ let heatmapVisible = false;
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
     loadIssues();
+<<<<<<< HEAD
     loadSilenceScores(); // Load authority silence scores
+=======
+    loadUnaddressedIssues();
+>>>>>>> 2df7404 (11th commit)
     setupEventListeners();
     setupLocationSearch(); // Initialize location search
 });
@@ -40,12 +45,8 @@ function initMap() {
         attributionControl: true
     });
 
-    // Add dark-themed map tiles (CartoDB Dark Matter)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(map);
+    // Initialize map tiles based on current theme
+    updateMapTheme();
 
     // Create marker cluster group
     markersLayer = L.markerClusterGroup({
@@ -68,6 +69,29 @@ function initMap() {
     });
 
     map.addLayer(markersLayer);
+}
+
+/**
+ * Update map tiles based on current theme
+ */
+function updateMapTheme() {
+    if (!map) return;
+
+    // Remove existing layer if any
+    if (tileLayer) {
+        map.removeLayer(tileLayer);
+    }
+
+    const isLightMode = document.body.classList.contains('light-mode');
+    const tileUrl = isLightMode
+        ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+    tileLayer = L.tileLayer(tileUrl, {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
 }
 
 /**
@@ -646,6 +670,7 @@ function escapeHtml(text) {
 }
 
 /**
+<<<<<<< HEAD
  * Load and display silence scores for all authorities
  */
 async function loadSilenceScores() {
@@ -751,10 +776,77 @@ async function geocodeLocation(query) {
 
     } catch (error) {
         console.error('Geocoding error:', error);
+=======
+ * Load unaddressed issues for the sidebar list
+ */
+async function loadUnaddressedIssues() {
+    const listEl = document.getElementById('unaddressed-list');
+    if (!listEl) return;
+
+    try {
+        const response = await fetch(MAP_CONFIG.apiUnaddressed);
+        const data = await response.json();
+
+        if (data.issues.length === 0) {
+            listEl.innerHTML = `
+                <div class="unaddressed-empty">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <p>All issues are being addressed!</p>
+                </div>
+            `;
+            return;
+        }
+
+        listEl.innerHTML = data.issues.map(issue => `
+            <div class="unaddressed-item" data-issue-id="${issue.id}">
+                <div class="unaddressed-rank urgency-${issue.urgency_level}">${issue.rank}</div>
+                <div class="unaddressed-info">
+                    <div class="unaddressed-title" onclick="showIssueDetails(${issue.id})">
+                        ${escapeHtml(issue.title)}
+                    </div>
+                    <div class="unaddressed-meta">
+                        <span class="unaddressed-days">
+                            <i class="fa-solid fa-clock"></i> ${issue.days_ignored} days
+                        </span>
+                        <span class="unaddressed-category">${escapeHtml(issue.category)}</span>
+                    </div>
+                    <div class="unaddressed-actions">
+                        <button class="unaddressed-comment-btn" onclick="toggleComments(${issue.id})">
+                            <i class="fa-solid fa-comment"></i> ${issue.comment_count}
+                        </button>
+                        <span class="unaddressed-confirms">
+                            <i class="fa-solid fa-users"></i> ${issue.confirmation_count}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="comment-section" id="comments-${issue.id}" style="display: none;">
+                <div class="comment-list" id="comment-list-${issue.id}"></div>
+                ${MAP_CONFIG.isAuthenticated ? `
+                    <div class="comment-form">
+                        <input type="text" class="comment-input" id="comment-input-${issue.id}" 
+                               placeholder="Add your comment..." maxlength="500">
+                        <button class="comment-submit" onclick="submitComment(${issue.id})">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                ` : `
+                    <div class="comment-login-prompt">
+                        <a href="/login/">Login</a> to comment
+                    </div>
+                `}
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading unaddressed issues:', error);
+        listEl.innerHTML = '<div class="unaddressed-error">Failed to load</div>';
+>>>>>>> 2df7404 (11th commit)
     }
 }
 
 /**
+<<<<<<< HEAD
  * Display autocomplete suggestions
  */
 function showSearchSuggestions(results) {
@@ -796,10 +888,102 @@ function hideSuggestions() {
     const container = document.getElementById('search-suggestions');
     if (container) {
         container.classList.remove('visible');
+=======
+ * Toggle comments section for an issue
+ */
+async function toggleComments(issueId) {
+    const section = document.getElementById(`comments-${issueId}`);
+    const commentList = document.getElementById(`comment-list-${issueId}`);
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+
+        // Load comments
+        try {
+            const response = await fetch(`/api/issues/${issueId}/comments/`);
+            const data = await response.json();
+
+            if (data.comments.length === 0) {
+                commentList.innerHTML = '<div class="no-comments">No comments yet. Be the first!</div>';
+            } else {
+                commentList.innerHTML = data.comments.map(c => `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-user">${escapeHtml(c.user)}</span>
+                            <span class="comment-date">${formatDate(c.created_at)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(c.content)}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            commentList.innerHTML = '<div class="comment-error">Failed to load comments</div>';
+        }
+    } else {
+        section.style.display = 'none';
     }
 }
 
 /**
+ * Submit a comment for an issue
+ */
+async function submitComment(issueId) {
+    const input = document.getElementById(`comment-input-${issueId}`);
+    const content = input.value.trim();
+
+    if (!content) {
+        alert('Please enter a comment');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/issues/${issueId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': MAP_CONFIG.csrfToken
+            },
+            body: JSON.stringify({ content })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            input.value = '';
+            // Reload comments
+            const commentList = document.getElementById(`comment-list-${issueId}`);
+            const c = data.comment;
+            const newComment = `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-user">${escapeHtml(c.user)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(c.content)}</div>
+                </div>
+            `;
+
+            // Check if "no comments" message exists and replace it
+            if (commentList.querySelector('.no-comments')) {
+                commentList.innerHTML = newComment;
+            } else {
+                commentList.insertAdjacentHTML('afterbegin', newComment);
+            }
+
+            // Update comment count
+            loadUnaddressedIssues();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error submitting comment:', error);
+        alert('Failed to submit comment. Please try again.');
+>>>>>>> 2df7404 (11th commit)
+    }
+}
+
+/**
+<<<<<<< HEAD
  * Select a location and pan map to it
  */
 async function selectLocation(lat, lng, name) {
@@ -878,4 +1062,21 @@ function updateLocationButtonState() {
     } else {
         btn.classList.remove('dimmed');
     }
+=======
+ * Format ISO date to relative time
+ */
+function formatDate(isoDate) {
+    const date = new Date(isoDate);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+>>>>>>> 2df7404 (11th commit)
 }

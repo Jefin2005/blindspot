@@ -191,6 +191,7 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s profile"
 
 
+<<<<<<< HEAD
 class NotificationLog(models.Model):
     """Log of all authority notification emails sent"""
     DELIVERY_STATUS = [
@@ -252,4 +253,18 @@ class IssueStatusLog(models.Model):
     
     def __str__(self):
         return f"Issue #{self.issue.id}: {self.previous_status} → {self.new_status}"
+=======
+class IssueComment(models.Model):
+    """User comments on unaddressed issues to add public pressure"""
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.issue.title}"
+>>>>>>> 2df7404 (11th commit)
 

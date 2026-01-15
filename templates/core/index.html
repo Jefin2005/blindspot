@@ -117,6 +117,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Unaddressed Reports -->
+        <div class="panel unaddressed-panel">
+            <h3 class="panel-title">
+                <i class="fa-solid fa-clock-rotate-left"></i> Unaddressed Reports
+            </h3>
+            <p class="unaddressed-subtitle">No action taken. Ranked by delay.</p>
+            <div class="unaddressed-list" id="unaddressed-list">
+                <div class="unaddressed-loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+        </div>
     </aside>
 
     <!-- Map Container -->
@@ -176,7 +189,11 @@
         zoom: 13,
         apiIssues: "{% url 'api_issues' %}",
         apiIssuesNearby: "{% url 'api_issues_nearby' %}",
+<<<<<<< HEAD
         apiIssuesRadius: "{% url 'api_issues_radius' %}",
+=======
+        apiUnaddressed: "{% url 'api_unaddressed_issues' %}",
+>>>>>>> 2df7404 (11th commit)
         apiStatistics: "{% url 'api_statistics' %}",
         apiSilenceScores: "{% url 'api_authority_silence_scores' %}",
         isAuthenticated: {% if user.is_authenticated %}true{% else %} false{% endif %},

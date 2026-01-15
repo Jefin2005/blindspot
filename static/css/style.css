@@ -5,6 +5,7 @@
 
 /* CSS Custom Properties */
 :root {
+<<<<<<< HEAD
     /* Colors - Dark Urban Theme */
     --bg-primary: #0a0f14;
     --bg-secondary: #111921;
@@ -19,6 +20,9 @@
     --text-accent: #60a5fa;
 
     /* Urgency Colors */
+=======
+    /* Shared colors (Brand/Urgency) */
+>>>>>>> 2df7404 (11th commit)
     --color-critical: #ef4444;
     --color-serious: #f97316;
     --color-moderate: #eab308;
@@ -36,6 +40,7 @@
     --electricity: #fbbf24;
     --infrastructure: #f97316;
 
+<<<<<<< HEAD
     /* UI Elements */
     --border-color: #374151;
     --border-subtle: #1f2937;
@@ -44,6 +49,8 @@
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
     --shadow-glow: 0 0 20px rgba(239, 68, 68, 0.3);
 
+=======
+>>>>>>> 2df7404 (11th commit)
     /* Typography */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -62,6 +69,57 @@
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
+}
+
+/* Dark Theme (Default) */
+body {
+    --bg-primary: #0a0f14;
+    --bg-secondary: #111921;
+    --bg-surface: #151c24;
+    --bg-elevated: #1a232e;
+    --bg-hover: #1f2937;
+
+    --text-primary: #e8eaed;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --text-accent: #60a5fa;
+
+    --border-color: #374151;
+    --border-subtle: #1f2937;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 20px rgba(239, 68, 68, 0.3);
+
+    --map-filter: none;
+    --marker-border: rgba(255, 255, 255, 0.3);
+}
+
+/* Light Theme */
+body.light-mode {
+    --bg-primary: #f3f4f6;
+    --bg-secondary: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f9fafb;
+    --bg-hover: #e5e7eb;
+
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --text-accent: #2563eb;
+
+    --border-color: #d1d5db;
+    --border-subtle: #e5e7eb;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 15px rgba(239, 68, 68, 0.2);
+
+    /* Native light tiles are used now */
+    --map-filter: none;
+    --marker-border: rgba(0, 0, 0, 0.2);
 }
 
 /* Reset & Base */
@@ -156,10 +214,13 @@ body {
 }
 
 .tagline {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-style: italic;
-    color: var(--text-muted);
+    color: var(--text-primary);
     letter-spacing: 0.02em;
+    font-weight: 500;
+    opacity: 0.9;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .header-right {
@@ -549,6 +610,10 @@ body {
     font-family: var(--font-primary);
 }
 
+.leaflet-tile-pane {
+    filter: var(--map-filter);
+}
+
 .leaflet-control-zoom {
     border: none !important;
     box-shadow: var(--shadow-md) !important;
@@ -711,6 +776,7 @@ body {
    CUSTOM MARKERS
    ======================================== */
 
+/* Marker styles */
 .issue-marker {
     width: 32px;
     height: 32px;
@@ -722,7 +788,7 @@ body {
     color: white;
     cursor: pointer;
     transition: transform var(--transition-fast);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--marker-border);
 }
 
 .issue-marker:hover {
@@ -1144,9 +1210,29 @@ body {
 
 .report-container {
     min-height: calc(100vh - var(--header-height));
+    max-height: calc(100vh - var(--header-height));
     padding: 2rem;
     max-width: 800px;
     margin: 0 auto;
+    overflow-y: auto;
+}
+
+.report-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.report-container::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 4px;
+}
+
+.report-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.report-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .report-header {
@@ -1352,6 +1438,7 @@ body {
 }
 
 /* ========================================
+<<<<<<< HEAD
    REPORT PAGE - REUSES DASHBOARD LAYOUT
    ======================================== */
 
@@ -1602,4 +1689,333 @@ body {
 
 .map-control-btn.dimmed:hover {
     opacity: 0.8;
+=======
+   UNADDRESSED REPORTS PANEL
+   ======================================== */
+
+.unaddressed-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    max-height: 550px;
+}
+
+.unaddressed-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    font-style: italic;
+}
+
+.unaddressed-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.25rem;
+}
+
+.unaddressed-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.unaddressed-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.unaddressed-loading,
+.unaddressed-empty,
+.unaddressed-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.unaddressed-empty i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--status-resolved);
+}
+
+/* Unaddressed Item */
+.unaddressed-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.625rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-fast);
+}
+
+.unaddressed-item:hover {
+    border-color: var(--border-color);
+    transform: translateX(2px);
+}
+
+/* Rank Number */
+.unaddressed-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: white;
+}
+
+.unaddressed-rank.urgency-critical {
+    background: var(--color-critical);
+    box-shadow: 0 0 8px var(--color-critical);
+    animation: rank-pulse 1.5s ease-in-out infinite;
+}
+
+.unaddressed-rank.urgency-serious {
+    background: var(--color-serious);
+    box-shadow: 0 0 6px var(--color-serious);
+}
+
+.unaddressed-rank.urgency-moderate {
+    background: var(--color-moderate);
+    color: var(--bg-primary);
+}
+
+.unaddressed-rank.urgency-recent {
+    background: var(--color-recent);
+    color: var(--bg-primary);
+}
+
+@keyframes rank-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 4px var(--color-critical);
+    }
+
+    50% {
+        box-shadow: 0 0 12px var(--color-critical);
+    }
+}
+
+/* Info Section */
+.unaddressed-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.unaddressed-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.unaddressed-title:hover {
+    color: var(--text-accent);
+}
+
+.unaddressed-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.unaddressed-days {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--color-critical);
+}
+
+.unaddressed-days i {
+    font-size: 0.65rem;
+}
+
+.unaddressed-category {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Actions */
+.unaddressed-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.unaddressed-comment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+}
+
+.unaddressed-comment-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.unaddressed-confirms {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Comment Section */
+.comment-section {
+    margin-left: 2.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.comment-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+}
+
+.comment-list::-webkit-scrollbar {
+    width: 3px;
+}
+
+.comment-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.no-comments,
+.comment-error {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 0.5rem;
+    font-style: italic;
+}
+
+.comment-item {
+    padding: 0.5rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.375rem;
+}
+
+.comment-item:last-child {
+    margin-bottom: 0;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.comment-user {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-accent);
+}
+
+.comment-date {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+.comment-content {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Comment Form */
+.comment-form {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.comment-input:focus {
+    border-color: var(--text-accent);
+}
+
+.comment-input::placeholder {
+    color: var(--text-muted);
+}
+
+.comment-submit {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-critical);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.comment-submit:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+.comment-login-prompt {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.comment-login-prompt a {
+    color: var(--text-accent);
+    text-decoration: none;
+}
+
+.comment-login-prompt a:hover {
+    text-decoration: underline;
+>>>>>>> 2df7404 (11th commit)
 }

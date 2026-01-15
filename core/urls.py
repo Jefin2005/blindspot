@@ -10,9 +10,15 @@ urlpatterns = [
     # API endpoints
     path('api/issues/', views.api_issues, name='api_issues'),
     path('api/issues/nearby/', views.api_issues_nearby, name='api_issues_nearby'),
+<<<<<<< HEAD
     path('api/issues/radius/', views.api_issues_radius, name='api_issues_radius'),
+=======
+    path('api/issues/unaddressed/', views.api_unaddressed_issues, name='api_unaddressed_issues'),
+>>>>>>> 2df7404 (11th commit)
     path('api/issues/<int:issue_id>/', views.api_issue_detail, name='api_issue_detail'),
     path('api/issues/<int:issue_id>/confirm/', views.confirm_issue, name='confirm_issue'),
+    path('api/issues/<int:issue_id>/comments/', views.api_issue_comments, name='api_issue_comments'),
+    path('api/issues/<int:issue_id>/comment/', views.api_add_comment, name='api_add_comment'),
     path('api/statistics/', views.api_statistics, name='api_statistics'),
     path('api/authorities/silence-scores/', views.api_authority_silence_scores, name='api_authority_silence_scores'),
     

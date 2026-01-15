@@ -43,6 +43,10 @@
             <span class="tagline">"These problems were never invisible — we just stopped seeing them."</span>
         </div>
         <div class="header-right">
+            <button id="theme-toggle" class="btn btn-ghost" title="Toggle theme" style="width: 40px; padding: 0.5rem;">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
             {% if user.is_authenticated %}
             <a href="{% url 'report_issue' %}" class="btn btn-primary">
                 <i class="fa-solid fa-plus"></i> Report Issue
@@ -52,12 +56,17 @@
                 <a href="{% url 'logout' %}" class="btn btn-ghost">Logout</a>
             </div>
             {% else %}
+<<<<<<< HEAD
             {% if request.resolver_match.url_name != 'login' %}
             <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
             {% endif %}
             {% if request.resolver_match.url_name != 'register' %}
             <a href="{% url 'register' %}" class="btn btn-primary">Join Us</a>
             {% endif %}
+=======
+            <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-primary">Join Us</a>
+>>>>>>> 2df7404 (11th commit)
             {% endif %}
         </div>
     </header>
@@ -89,6 +98,42 @@
     <!-- Custom Scripts -->
     <script src="{% static 'js/app.js' %}"></script>
 
+<<<<<<< HEAD
+=======
+    <script>
+        // Theme Toggling Logic
+        document.addEventListener('DOMContentLoaded', function () {
+            const themeToggle = document.getElementById('theme-toggle');
+            const icon = themeToggle.querySelector('i');
+            const body = document.body;
+
+            // Check saved preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                icon.className = 'fa-solid fa-sun';
+            }
+
+            themeToggle.addEventListener('click', function () {
+                body.classList.toggle('light-mode');
+
+                // Update map tiles if map exists
+                if (typeof updateMapTheme === 'function') {
+                    updateMapTheme();
+                }
+
+                if (body.classList.contains('light-mode')) {
+                    localStorage.setItem('theme', 'light');
+                    icon.className = 'fa-solid fa-sun';
+                } else {
+                    localStorage.setItem('theme', 'dark');
+                    icon.className = 'fa-solid fa-moon';
+                }
+            });
+        });
+    </script>
+
+>>>>>>> 2df7404 (11th commit)
     {% block extra_js %}{% endblock %}
 </body>
 
