@@ -106,6 +106,12 @@
 
     <!-- Map Container -->
     <div class="map-wrapper">
+        <!-- Proximity Overlay (non-intrusive message) -->
+        <div class="proximity-overlay" id="proximity-overlay">
+            <i class="fa-solid fa-location-dot"></i>
+            <span id="proximity-message"></span>
+        </div>
+
         <!-- Map Controls -->
         <div class="map-controls">
             <button class="map-control-btn" id="btn-my-location" title="Find issues near me">
@@ -155,7 +161,9 @@
         zoom: 13,
         apiIssues: "{% url 'api_issues' %}",
         apiIssuesNearby: "{% url 'api_issues_nearby' %}",
+        apiIssuesRadius: "{% url 'api_issues_radius' %}",
         apiStatistics: "{% url 'api_statistics' %}",
+        apiSilenceScores: "{% url 'api_authority_silence_scores' %}",
         isAuthenticated: {% if user.is_authenticated %}true{% else %} false{% endif %},
     csrfToken: "{{ csrf_token }}"
     };

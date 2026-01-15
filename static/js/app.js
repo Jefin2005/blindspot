@@ -9,6 +9,7 @@ let markersLayer;
 let heatmapLayer;
 let userLocationMarker;
 let issuesData = [];
+let nearbyMarkerIds = []; // Track IDs of nearby issues for glow effect
 let currentFilters = {
     authority: 'all',
     status: 'all'
@@ -19,6 +20,7 @@ let heatmapVisible = false;
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
     loadIssues();
+    loadSilenceScores(); // Load authority silence scores
     setupEventListeners();
 });
 
@@ -168,13 +170,18 @@ function renderMarkers(features) {
 
 /**
  * Create custom marker icon based on urgency
+ * Adds glow effect if marker is within proximity radius
  */
 function createIssueIcon(props) {
     const urgency = props.urgency_level;
     const icon = props.icon || 'fa-exclamation';
 
+    // Add nearby-glow class if this issue is within 3km radius
+    const isNearby = nearbyMarkerIds.includes(props.id);
+    const nearbyClass = isNearby ? ' marker-nearby-glow' : '';
+
     return L.divIcon({
-        className: `issue-marker urgency-${urgency}`,
+        className: `issue-marker urgency-${urgency}${nearbyClass}`,
         html: `<i class="fa-solid ${icon}"></i>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16]
@@ -339,7 +346,7 @@ function setupEventListeners() {
 }
 
 /**
- * Show user's location and nearby issues
+ * Show user's location and nearby issues ("You Walked Past This" mode)
  */
 function showMyLocation() {
     const btn = document.getElementById('btn-my-location');
@@ -366,18 +373,19 @@ function showMyLocation() {
                     })
                 }).addTo(map);
 
-                // Pan to location
-                map.setView([lat, lng], 15);
+                // Zoom to city-neighborhood level (14 instead of 15 for wider view)
+                map.setView([lat, lng], 14);
 
-                // Load nearby issues
-                await loadNearbyIssues(lat, lng);
+                // Load nearby unresolved issues within 3km radius
+                await loadNearbyUnresolvedIssues(lat, lng);
 
                 btn.classList.remove('active');
                 btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>My Location</span>';
             },
             function (error) {
                 console.error('Geolocation error:', error);
-                alert('Unable to get your location. Please enable location services.');
+                showProximityOverlay('Unable to get your location. Please enable location services.');
+                setTimeout(hideProximityOverlay, 4000);
                 btn.classList.remove('active');
                 btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>My Location</span>';
             },
@@ -387,10 +395,59 @@ function showMyLocation() {
             }
         );
     } else {
-        alert('Geolocation is not supported by your browser.');
+        showProximityOverlay('Geolocation is not supported by your browser.');
+        setTimeout(hideProximityOverlay, 4000);
         btn.classList.remove('active');
         btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>My Location</span>';
     }
+}
+
+/**
+ * Load unresolved issues within 3km radius using Haversine distance
+ */
+async function loadNearbyUnresolvedIssues(lat, lng) {
+    try {
+        const response = await fetch(`${MAP_CONFIG.apiIssuesRadius}?lat=${lat}&lng=${lng}&radius=3`);
+        const data = await response.json();
+
+        const unresolvedCount = data.unresolved_count;
+        nearbyMarkerIds = data.nearby_issue_ids;
+
+        // Show subtle, non-intrusive proximity overlay
+        if (unresolvedCount > 0) {
+            showProximityOverlay(`Within 3 km of you, ${unresolvedCount} unresolved civic issues remain.`);
+        } else {
+            showProximityOverlay('No unresolved civic issues within 3 km of you.');
+        }
+
+        // Auto-hide after 5 seconds
+        setTimeout(hideProximityOverlay, 5000);
+
+        // Refresh markers to apply glow effect to nearby ones
+        renderMarkers(issuesData);
+
+    } catch (error) {
+        console.error('Error loading nearby unresolved issues:', error);
+    }
+}
+
+/**
+ * Show the proximity overlay with a message
+ */
+function showProximityOverlay(message) {
+    const overlay = document.getElementById('proximity-overlay');
+    const messageEl = document.getElementById('proximity-message');
+
+    messageEl.textContent = message;
+    overlay.classList.add('visible');
+}
+
+/**
+ * Hide the proximity overlay
+ */
+function hideProximityOverlay() {
+    const overlay = document.getElementById('proximity-overlay');
+    overlay.classList.remove('visible');
 }
 
 /**
@@ -583,3 +640,39 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+/**
+ * Load and display silence scores for all authorities
+ */
+async function loadSilenceScores() {
+    try {
+        const response = await fetch(MAP_CONFIG.apiSilenceScores);
+        const data = await response.json();
+
+        // Update each authority filter button with silence score
+        data.authorities.forEach(auth => {
+            const btn = document.querySelector(`.filter-btn[data-authority="${auth.id}"]`);
+            if (btn) {
+                // Check if silence score element already exists
+                let scoreEl = btn.querySelector('.silence-score');
+                if (!scoreEl) {
+                    scoreEl = document.createElement('span');
+                    scoreEl.className = 'silence-score';
+                    btn.appendChild(scoreEl);
+                }
+
+                // Only show if score > 0
+                if (auth.silence_score > 0) {
+                    scoreEl.textContent = `Silence: ${auth.silence_score}`;
+                    scoreEl.title = `Average ${auth.silence_score} days of inaction per issue`;
+                } else {
+                    scoreEl.textContent = '';
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading silence scores:', error);
+    }
+}
+

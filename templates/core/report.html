@@ -4,21 +4,28 @@
 {% block title %}Report an Issue - The Blindspot Initiative{% endblock %}
 
 {% block content %}
-<div class="report-container">
-    <div class="report-header">
-        <h1 class="report-title">
-            <i class="fa-solid fa-bullhorn" style="color: var(--color-critical);"></i>
-            Report a Civic Issue
-        </h1>
-        <p class="report-subtitle">Help expose neglect in your community. Your report matters.</p>
-    </div>
+<div class="app-container">
+    <!-- Sidebar: Report Form -->
+    <aside class="sidebar">
+        <form id="report-form">
+            {% csrf_token %}
 
-    <form class="report-form" id="report-form">
-        {% csrf_token %}
+            <!-- Form Header Panel -->
+            <div class="panel">
+                <h3 class="panel-title">
+                    <i class="fa-solid fa-bullhorn" style="color: var(--color-critical);"></i>
+                    Report an Issue
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Help expose neglect in your community
+                </p>
+            </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label class="form-label" for="category">Issue Category *</label>
+            <!-- Category Panel -->
+            <div class="panel">
+                <h3 class="panel-title">
+                    <i class="fa-solid fa-folder"></i> Issue Category
+                </h3>
                 <select name="category_id" id="category" class="form-select" required>
                     <option value="">Select a category...</option>
                     {% regroup categories by authority as authority_list %}
@@ -34,90 +41,123 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="title">Issue Title *</label>
-                <input type="text" name="title" id="title" class="form-input"
-                    placeholder="Brief description of the issue" required maxlength="200">
+            <!-- Issue Details Panel -->
+            <div class="panel">
+                <h3 class="panel-title">
+                    <i class="fa-solid fa-pen"></i> Issue Details
+                </h3>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" for="title">Title *</label>
+                    <input type="text" name="title" id="title" class="form-input" placeholder="Brief description"
+                        required maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="description">Description *</label>
+                    <textarea name="description" id="description" class="form-input form-textarea"
+                        placeholder="Describe the issue in detail..." required style="min-height: 100px;"></textarea>
+                </div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label class="form-label" for="description">Detailed Description *</label>
-            <textarea name="description" id="description" class="form-input form-textarea"
-                placeholder="Describe the issue in detail. Include any relevant information that could help authorities address it."
-                required></textarea>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="address">Location / Address *</label>
-            <input type="text" name="address" id="address" class="form-input"
-                placeholder="Street name, landmark, or area" required>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Pin Location on Map *</label>
-            <div class="location-picker" id="location-picker"></div>
-            <p class="form-help">Click on the map to set the issue location. <span id="coords-display"></span></p>
-            <input type="hidden" name="latitude" id="latitude" required>
-            <input type="hidden" name="longitude" id="longitude" required>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Severity Level</label>
-            <div class="severity-selector">
-                <label class="severity-option" data-value="1">
-                    <input type="radio" name="severity" value="1">
-                    <div class="severity-number" style="color: var(--color-recent);">1</div>
-                    <div class="severity-label">Minor</div>
-                </label>
-                <label class="severity-option" data-value="2">
-                    <input type="radio" name="severity" value="2">
-                    <div class="severity-number" style="color: var(--color-recent);">2</div>
-                    <div class="severity-label">Low</div>
-                </label>
-                <label class="severity-option active" data-value="3">
-                    <input type="radio" name="severity" value="3" checked>
-                    <div class="severity-number" style="color: var(--color-moderate);">3</div>
-                    <div class="severity-label">Moderate</div>
-                </label>
-                <label class="severity-option" data-value="4">
-                    <input type="radio" name="severity" value="4">
-                    <div class="severity-number" style="color: var(--color-serious);">4</div>
-                    <div class="severity-label">High</div>
-                </label>
-                <label class="severity-option" data-value="5">
-                    <input type="radio" name="severity" value="5">
-                    <div class="severity-number" style="color: var(--color-critical);">5</div>
-                    <div class="severity-label">Critical</div>
-                </label>
+            <!-- Location Panel -->
+            <div class="panel">
+                <h3 class="panel-title">
+                    <i class="fa-solid fa-location-dot"></i> Location
+                </h3>
+                <button type="button" id="btn-auto-location" class="filter-btn"
+                    style="width: 100%; margin-bottom: 0.75rem; justify-content: center;">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>Auto-detect Location</span>
+                </button>
+                <input type="text" name="address" id="address" class="form-input"
+                    placeholder="Or enter address (optional)">
+                <p id="coords-display" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Click on the map to set location
+                </p>
+                <input type="hidden" name="latitude" id="latitude" required>
+                <input type="hidden" name="longitude" id="longitude" required>
             </div>
+
+            <!-- Severity Panel -->
+            <div class="panel">
+                <h3 class="panel-title">
+                    <i class="fa-solid fa-gauge-high"></i> Severity Level
+                </h3>
+                <div class="severity-selector">
+                    <label class="severity-option" data-value="1">
+                        <input type="radio" name="severity" value="1">
+                        <div class="severity-number" style="color: var(--color-recent);">1</div>
+                        <div class="severity-label">Minor</div>
+                    </label>
+                    <label class="severity-option" data-value="2">
+                        <input type="radio" name="severity" value="2">
+                        <div class="severity-number" style="color: var(--color-recent);">2</div>
+                        <div class="severity-label">Low</div>
+                    </label>
+                    <label class="severity-option active" data-value="3">
+                        <input type="radio" name="severity" value="3" checked>
+                        <div class="severity-number" style="color: var(--color-moderate);">3</div>
+                        <div class="severity-label">Moderate</div>
+                    </label>
+                    <label class="severity-option" data-value="4">
+                        <input type="radio" name="severity" value="4">
+                        <div class="severity-number" style="color: var(--color-serious);">4</div>
+                        <div class="severity-label">High</div>
+                    </label>
+                    <label class="severity-option" data-value="5">
+                        <input type="radio" name="severity" value="5">
+                        <div class="severity-number" style="color: var(--color-critical);">5</div>
+                        <div class="severity-label">Critical</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1rem;">
+                <i class="fa-solid fa-paper-plane"></i> Submit Report
+            </button>
+        </form>
+    </aside>
+
+    <!-- Map Container -->
+    <div class="map-wrapper">
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="map-control-btn" id="btn-my-location" title="Center on my location">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>My Location</span>
+            </button>
+            <a href="{% url 'index' %}" class="map-control-btn" title="Back to Dashboard">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Dashboard</span>
+            </a>
         </div>
 
-        <button type="submit" class="btn btn-primary auth-submit">
-            <i class="fa-solid fa-paper-plane"></i> Submit Report
-        </button>
-    </form>
+        <!-- The Map -->
+        <div id="report-map"></div>
+    </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize mini map for location picker
-        const miniMap = L.map('location-picker').setView([9.9312, 76.2673], 13);
+        // Initialize map for location picker (same style as dashboard)
+        const map = L.map('report-map').setView([9.9312, 76.2673], 13);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OSM',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             maxZoom: 19
-        }).addTo(miniMap);
+        }).addTo(map);
 
         let locationMarker = null;
 
-        miniMap.on('click', function (e) {
+        // Map click to set location
+        map.on('click', function (e) {
             const lat = e.latlng.lat.toFixed(7);
             const lng = e.latlng.lng.toFixed(7);
 
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
-            document.getElementById('coords-display').textContent = `Selected: ${lat}, ${lng}`;
+            document.getElementById('coords-display').innerHTML =
+                '<i class="fa-solid fa-check" style="color: var(--status-resolved);"></i> Location: ' + lat + ', ' + lng;
 
             if (locationMarker) {
                 locationMarker.setLatLng(e.latlng);
@@ -129,16 +169,96 @@
                         iconSize: [32, 32],
                         iconAnchor: [16, 32]
                     })
-                }).addTo(miniMap);
+                }).addTo(map);
             }
         });
 
-        // Try to get user location
+        // Try to get user location on load
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(function (pos) {
-                miniMap.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                map.setView([pos.coords.latitude, pos.coords.longitude], 15);
             });
         }
+
+        // My Location button
+        document.getElementById('btn-my-location').addEventListener('click', function () {
+            const btn = this;
+            btn.classList.add('active');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Locating...</span>';
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+
+                        map.setView([lat, lng], 16);
+
+                        btn.classList.remove('active');
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>My Location</span>';
+                    },
+                    function (error) {
+                        alert('Unable to get location');
+                        btn.classList.remove('active');
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>My Location</span>';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+        });
+
+        // Auto-detect location button
+        document.getElementById('btn-auto-location').addEventListener('click', function () {
+            const btn = this;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Detecting...</span>';
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        const lat = pos.coords.latitude.toFixed(7);
+                        const lng = pos.coords.longitude.toFixed(7);
+
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        document.getElementById('coords-display').innerHTML =
+                            '<i class="fa-solid fa-check" style="color: var(--status-resolved);"></i> Auto-detected: ' + lat + ', ' + lng;
+
+                        map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+
+                        if (locationMarker) {
+                            locationMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+                        } else {
+                            locationMarker = L.marker([pos.coords.latitude, pos.coords.longitude], {
+                                icon: L.divIcon({
+                                    className: 'issue-marker urgency-critical',
+                                    html: '<i class="fa-solid fa-map-pin"></i>',
+                                    iconSize: [32, 32],
+                                    iconAnchor: [16, 32]
+                                })
+                            }).addTo(map);
+                        }
+
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Location Set!</span>';
+                        btn.style.background = 'var(--status-resolved)';
+                        btn.style.color = 'white';
+
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Auto-detect Location</span>';
+                            btn.style.background = '';
+                            btn.style.color = '';
+                        }, 2000);
+                    },
+                    function (error) {
+                        btn.innerHTML = '<i class="fa-solid fa-times"></i><span>Failed</span>';
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Auto-detect Location</span>';
+                        }, 2000);
+                        alert('Unable to detect location. Please click on the map.');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+        });
 
         // Severity selector
         document.querySelectorAll('.severity-option').forEach(option => {

@@ -9,6 +9,7 @@ class Authority(models.Model):
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, default='fa-building')  # FontAwesome icon
     color = models.CharField(max_length=7, default='#4d9fff')  # Hex color for markers
+    email = models.EmailField(blank=True, help_text="Official email address for notifications")
     
     class Meta:
         verbose_name_plural = "Authorities"
@@ -16,6 +17,31 @@ class Authority(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def get_silence_score(self):
+        """
+        Calculate the Silence Score for this authority.
+        Formula: total_unresolved_days / total_issues
+        
+        Returns the average days of inaction per issue.
+        Computed dynamically to reflect live conditions.
+        """
+        # Get all unresolved issues under this authority
+        unresolved_issues = self.categories.all().values_list('issues', flat=True)
+        from django.db.models import Q
+        issues = Issue.objects.filter(
+            category__authority=self,
+            status__in=['ignored', 'acknowledged', 'in_progress']
+        )
+        
+        total_issues = issues.count()
+        if total_issues == 0:
+            return 0.0
+        
+        # Sum days since report for all unresolved issues
+        total_unresolved_days = sum(issue.days_since_report for issue in issues)
+        
+        return round(total_unresolved_days / total_issues, 1)
 
 
 class Category(models.Model):
@@ -114,6 +140,27 @@ class Issue(models.Model):
             'recent': '#4ade80'
         }
         return colors.get(self.urgency_level, '#4d9fff')
+    
+    @property
+    def escalation_label(self):
+        """Get escalation label based on days ignored (passive accountability)"""
+        if self.status == 'resolved':
+            return None
+        days = self.days_ignored
+        if days >= 30:
+            return 'systemic_neglect'
+        elif days >= 14:
+            return 'unacknowledged'
+        return None
+    
+    @property
+    def escalation_display(self):
+        """Human-readable escalation label for UI"""
+        labels = {
+            'systemic_neglect': 'Systemic Neglect',
+            'unacknowledged': 'Unacknowledged'
+        }
+        return labels.get(self.escalation_label)
 
 
 class IssueConfirmation(models.Model):
@@ -140,3 +187,27 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username}'s profile"
+
+
+class NotificationLog(models.Model):
+    """Log of all authority notification emails sent"""
+    DELIVERY_STATUS = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+    
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='notifications')
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
+    email_address = models.EmailField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=DELIVERY_STATUS, default='pending')
+    error_message = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "Notification Log"
+        verbose_name_plural = "Notification Logs"
+    
+    def __str__(self):
+        return f"Notification to {self.authority.name} for Issue #{self.issue.id} - {self.status}"

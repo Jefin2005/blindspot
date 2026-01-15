@@ -9,8 +9,10 @@ from django.db.models import Count, Avg
 from django.utils import timezone
 from datetime import timedelta
 import json
+import math
 
-from .models import Authority, Category, Issue, IssueConfirmation, UserProfile
+from .models import Authority, Category, Issue, IssueConfirmation, UserProfile, NotificationLog
+from .notifications import send_authority_notification
 
 
 def index(request):
@@ -155,6 +157,16 @@ def api_issue_detail(request, issue_id):
             issue=issue, user=request.user
         ).exists()
     
+    # Get notification status
+    notification = issue.notifications.first()
+    notification_status = None
+    if notification:
+        notification_status = {
+            'sent_at': notification.sent_at.isoformat(),
+            'status': notification.status,
+            'authority_notified': notification.authority.name,
+        }
+    
     data = {
         'id': issue.id,
         'title': issue.title,
@@ -177,6 +189,9 @@ def api_issue_detail(request, issue_id):
         'reported_by': issue.reported_by.username if issue.reported_by else 'Anonymous',
         'user_confirmed': user_confirmed,
         'image_url': issue.image.url if issue.image else None,
+        'escalation_label': issue.escalation_label,
+        'escalation_display': issue.escalation_display,
+        'notification': notification_status,
     }
     
     return JsonResponse(data)
@@ -313,6 +328,9 @@ def report_issue(request):
                 reported_by=request.user,
             )
             
+            # Send notification to authority (non-blocking)
+            send_authority_notification(issue)
+            
             # Update user profile stats
             profile, _ = UserProfile.objects.get_or_create(user=request.user)
             profile.reports_count += 1
@@ -320,7 +338,7 @@ def report_issue(request):
             
             return JsonResponse({
                 'success': True,
-                'message': 'Issue reported successfully',
+                'message': 'Issue reported successfully. Authority has been notified.',
                 'issue_id': issue.id
             })
         except Exception as e:
@@ -332,3 +350,109 @@ def report_issue(request):
     # GET request - show report form
     categories = Category.objects.select_related('authority').all()
     return render(request, 'core/report.html', {'categories': categories})
+
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great-circle distance between two points on Earth
+    using the Haversine formula.
+    
+    Returns distance in kilometers.
+    """
+    R = 6371  # Earth's radius in kilometers
+    
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    
+    a = (math.sin(delta_lat / 2) ** 2 +
+         math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    return R * c
+
+
+def api_issues_radius(request):
+    """
+    Return unresolved issues within a specified radius (default 3km).
+    Uses Haversine formula for accurate distance calculation.
+    
+    Query params:
+        lat: latitude of center point
+        lng: longitude of center point  
+        radius: radius in km (default 3)
+    """
+    try:
+        lat = float(request.GET.get('lat', 0))
+        lng = float(request.GET.get('lng', 0))
+        radius_km = float(request.GET.get('radius', 3))  # Default 3km
+    except ValueError:
+        return JsonResponse({'error': 'Invalid coordinates'}, status=400)
+    
+    # Get all unresolved issues (not resolved)
+    unresolved_statuses = ['ignored', 'acknowledged', 'in_progress']
+    issues = Issue.objects.filter(
+        status__in=unresolved_statuses
+    ).select_related('category', 'category__authority')
+    
+    # Filter by distance using Haversine formula
+    nearby_issues = []
+    for issue in issues:
+        distance = haversine_distance(
+            lat, lng,
+            float(issue.latitude), float(issue.longitude)
+        )
+        if distance <= radius_km:
+            nearby_issues.append({
+                'id': issue.id,
+                'title': issue.title,
+                'latitude': float(issue.latitude),
+                'longitude': float(issue.longitude),
+                'distance_km': round(distance, 2),
+                'days_since_report': issue.days_since_report,
+                'urgency_level': issue.urgency_level,
+                'urgency_color': issue.urgency_color,
+                'status': issue.status,
+                'category': issue.category.name,
+                'authority': issue.category.authority.name,
+            })
+    
+    # Sort by distance
+    nearby_issues.sort(key=lambda x: x['distance_km'])
+    
+    return JsonResponse({
+        'center': {'lat': lat, 'lng': lng},
+        'radius_km': radius_km,
+        'unresolved_count': len(nearby_issues),
+        'nearby_issue_ids': [i['id'] for i in nearby_issues],
+        'issues': nearby_issues
+    })
+
+
+def api_authority_silence_scores(request):
+    """
+    Return silence scores for all authorities.
+    
+    Silence Score = total_unresolved_days / total_issues
+    Computed dynamically to reflect live conditions.
+    """
+    authorities = Authority.objects.all()
+    
+    scores = []
+    for authority in authorities:
+        score = authority.get_silence_score()
+        scores.append({
+            'id': authority.id,
+            'name': authority.name,
+            'silence_score': score,
+            'color': authority.color,
+        })
+    
+    # Sort by silence score descending (worst performers first)
+    scores.sort(key=lambda x: x['silence_score'], reverse=True)
+    
+    return JsonResponse({
+        'authorities': scores
+    })
+

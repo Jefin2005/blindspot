@@ -22,25 +22,29 @@ class Command(BaseCommand):
                 'name': 'Water Authority',
                 'description': 'Kerala Water Authority - Responsible for water supply and drainage',
                 'icon': 'fa-droplet',
-                'color': '#06b6d4'
+                'color': '#06b6d4',
+                'email': 'complaints@kwa.kerala.gov.in'
             },
             {
                 'name': 'Municipal Corporation',
                 'description': 'Kochi Municipal Corporation - Waste management and sanitation',
                 'icon': 'fa-building-columns',
-                'color': '#8b5cf6'
+                'color': '#8b5cf6',
+                'email': 'secretary@corporationofkochi.com'
             },
             {
                 'name': 'Electricity Board',
                 'description': 'KSEB - Kerala State Electricity Board',
                 'icon': 'fa-bolt',
-                'color': '#fbbf24'
+                'color': '#fbbf24',
+                'email': 'complaints@kseb.in'
             },
             {
                 'name': 'Urban Infrastructure',
                 'description': 'Roads, bridges, walkways, and public spaces',
                 'icon': 'fa-road',
-                'color': '#f97316'
+                'color': '#f97316',
+                'email': 'pwd@kerala.gov.in'
             },
         ]
         
