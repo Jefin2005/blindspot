@@ -8,8 +8,11 @@ let map;
 let markersLayer;
 let heatmapLayer;
 let userLocationMarker;
+let customLocationMarker;
 let issuesData = [];
 let nearbyMarkerIds = []; // Track IDs of nearby issues for glow effect
+let isCustomLocation = false; // Track if viewing a custom searched location
+let searchDebounceTimer;
 let currentFilters = {
     authority: 'all',
     status: 'all'
@@ -22,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadIssues();
     loadSilenceScores(); // Load authority silence scores
     setupEventListeners();
+    setupLocationSearch(); // Initialize location search
 });
 
 /**
@@ -676,3 +680,202 @@ async function loadSilenceScores() {
     }
 }
 
+/**
+ * Setup location search functionality
+ */
+function setupLocationSearch() {
+    const searchInput = document.getElementById('location-search');
+    const clearBtn = document.getElementById('search-clear');
+    const suggestionsContainer = document.getElementById('search-suggestions');
+
+    if (!searchInput) return;
+
+    // Input event with debounce for autocomplete
+    searchInput.addEventListener('input', function (e) {
+        const query = e.target.value.trim();
+
+        // Show/hide clear button
+        clearBtn.style.display = query ? 'block' : 'none';
+
+        // Clear previous timer
+        clearTimeout(searchDebounceTimer);
+
+        if (query.length < 3) {
+            hideSuggestions();
+            return;
+        }
+
+        // Debounce API calls (300ms)
+        searchDebounceTimer = setTimeout(() => {
+            geocodeLocation(query);
+        }, 300);
+    });
+
+    // Enter key to select first suggestion
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            const firstSuggestion = suggestionsContainer.querySelector('.suggestion-item');
+            if (firstSuggestion) {
+                firstSuggestion.click();
+            }
+        }
+    });
+
+    // Clear button
+    clearBtn.addEventListener('click', clearLocationSearch);
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.search-panel')) {
+            hideSuggestions();
+        }
+    });
+}
+
+/**
+ * Geocode location using OpenStreetMap Nominatim API
+ */
+async function geocodeLocation(query) {
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`;
+
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'BlindspotInitiative/1.0'
+            }
+        });
+
+        const results = await response.json();
+        showSearchSuggestions(results);
+
+    } catch (error) {
+        console.error('Geocoding error:', error);
+    }
+}
+
+/**
+ * Display autocomplete suggestions
+ */
+function showSearchSuggestions(results) {
+    const container = document.getElementById('search-suggestions');
+
+    if (results.length === 0) {
+        container.innerHTML = '<div class="no-results">No locations found</div>';
+        container.classList.add('visible');
+        return;
+    }
+
+    container.innerHTML = results.map(result => `
+        <div class="suggestion-item" 
+             data-lat="${result.lat}" 
+             data-lng="${result.lon}"
+             data-name="${escapeHtml(result.display_name)}">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>${escapeHtml(result.display_name)}</span>
+        </div>
+    `).join('');
+
+    // Add click handlers
+    container.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', function () {
+            const lat = parseFloat(this.dataset.lat);
+            const lng = parseFloat(this.dataset.lng);
+            const name = this.dataset.name;
+            selectLocation(lat, lng, name);
+        });
+    });
+
+    container.classList.add('visible');
+}
+
+/**
+ * Hide search suggestions
+ */
+function hideSuggestions() {
+    const container = document.getElementById('search-suggestions');
+    if (container) {
+        container.classList.remove('visible');
+    }
+}
+
+/**
+ * Select a location and pan map to it
+ */
+async function selectLocation(lat, lng, name) {
+    const searchInput = document.getElementById('location-search');
+
+    // Update input with selected location name (shortened)
+    const shortName = name.split(',').slice(0, 2).join(', ');
+    searchInput.value = shortName;
+
+    // Hide suggestions
+    hideSuggestions();
+
+    // Mark as custom location mode
+    isCustomLocation = true;
+    updateLocationButtonState();
+
+    // Remove previous custom location marker
+    if (customLocationMarker) {
+        map.removeLayer(customLocationMarker);
+    }
+
+    // Add marker for selected location
+    customLocationMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: 'custom-location-wrapper',
+            html: '<div class="custom-location-marker"><i class="fa-solid fa-map-pin"></i></div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        })
+    }).addTo(map);
+
+    // Zoom to city-neighborhood level
+    map.setView([lat, lng], 14);
+
+    // Load nearby unresolved issues (reuse existing function)
+    await loadNearbyUnresolvedIssues(lat, lng);
+}
+
+/**
+ * Clear location search and reset to default
+ */
+function clearLocationSearch() {
+    const searchInput = document.getElementById('location-search');
+    const clearBtn = document.getElementById('search-clear');
+
+    searchInput.value = '';
+    clearBtn.style.display = 'none';
+    hideSuggestions();
+
+    // Reset custom location mode
+    isCustomLocation = false;
+    updateLocationButtonState();
+
+    // Remove custom location marker
+    if (customLocationMarker) {
+        map.removeLayer(customLocationMarker);
+        customLocationMarker = null;
+    }
+
+    // Clear nearby markers glow
+    nearbyMarkerIds = [];
+    renderMarkers(issuesData);
+    hideProximityOverlay();
+
+    // Reset map to default center
+    map.setView(MAP_CONFIG.center, MAP_CONFIG.zoom);
+}
+
+/**
+ * Update My Location button state based on custom location mode
+ */
+function updateLocationButtonState() {
+    const btn = document.getElementById('btn-my-location');
+    if (isCustomLocation) {
+        btn.classList.add('dimmed');
+    } else {
+        btn.classList.remove('dimmed');
+    }
+}
